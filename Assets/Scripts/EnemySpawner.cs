@@ -5,42 +5,51 @@ using UnityEngine;
 public class EnemySpawner : MonoBehaviour
 {
     [SerializeField]
-    private GameObject enemyPrefab;
-    [SerializeField]
     private GameObject enemyHPSliderPrefab;
     [SerializeField]
     private Transform canvasTransform;
-    [SerializeField]
-    private float spawnTime;
     [SerializeField]
     private Transform[] wayPoints;
     [SerializeField]
     private PlayerHP playerHP;
     [SerializeField]
     private PlayerGold playerGold;
+    private Wave currentWave;
+    private int currentEnemyCount;
     private List<Enemy> enemyList;
 
     public List<Enemy> EnemyList => enemyList;
+    public int CurrentEnemyCount => currentEnemyCount;
+    public int MaxEnemyCount => currentWave.maxEnemyCount;
 
     private void Awake()
     {
         enemyList = new List<Enemy>();
+    }
+
+    public void StartWave(Wave wave)
+    {
+        currentWave = wave;
+        currentEnemyCount = currentWave.maxEnemyCount;
         StartCoroutine("SpawnEnemy");
     }
 
     private IEnumerator SpawnEnemy()
     {
-        while (true)
-        {
-            GameObject clone = Instantiate(enemyPrefab);
-            Enemy enemy = clone.GetComponent<Enemy>();
+        int spawnEnemyCount = 0;
 
+        while (spawnEnemyCount < currentWave.maxEnemyCount)
+        {
+            int enemyIndex = Random.Range(0, currentWave.enemyPrefabs.Length);
+            GameObject clone = Instantiate(currentWave.enemyPrefabs[enemyIndex]);
+            Enemy enemy = clone.GetComponent<Enemy>();
             enemy.Setup(this, wayPoints);
             enemyList.Add(enemy);
 
             SpawnEnemyHPSlider(clone);
+            spawnEnemyCount++;
 
-            yield return new WaitForSeconds(spawnTime);
+            yield return new WaitForSeconds(currentWave.spawnTime);
         }
     }
 
@@ -55,6 +64,7 @@ public class EnemySpawner : MonoBehaviour
             playerGold.CurrentGold += gold;
         }
 
+        currentEnemyCount--;
         enemyList.Remove(enemy);
         Destroy(enemy.gameObject);
     }
