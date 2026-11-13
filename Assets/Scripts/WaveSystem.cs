@@ -13,7 +13,7 @@ public class WaveSystem : MonoBehaviour
 
     public void StartWave()
     {
-        if (enemySpawner.EnemyList.Count == 0 && currentWaveIndex < waves.Length - 1)
+        if (enemySpawner.EnemyList.Count == 0 && enemySpawner.CurrentEnemyCount == 0 && currentWaveIndex < waves.Length - 1)
         {
             currentWaveIndex++;
             enemySpawner.StartWave(waves[currentWaveIndex]);

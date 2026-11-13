@@ -36,12 +36,13 @@ public class EnemySpawner : MonoBehaviour
 
     private IEnumerator SpawnEnemy()
     {
+        Wave wave = currentWave;
         int spawnEnemyCount = 0;
 
-        while (spawnEnemyCount < currentWave.maxEnemyCount)
+        while (spawnEnemyCount < wave.maxEnemyCount)
         {
-            int enemyIndex = Random.Range(0, currentWave.enemyPrefabs.Length);
-            GameObject clone = Instantiate(currentWave.enemyPrefabs[enemyIndex]);
+            int enemyIndex = Random.Range(0, wave.enemyPrefabs.Length);
+            GameObject clone = Instantiate(wave.enemyPrefabs[enemyIndex]);
             Enemy enemy = clone.GetComponent<Enemy>();
             enemy.Setup(this, wayPoints);
             enemyList.Add(enemy);
@@ -49,7 +50,7 @@ public class EnemySpawner : MonoBehaviour
             SpawnEnemyHPSlider(clone);
             spawnEnemyCount++;
 
-            yield return new WaitForSeconds(currentWave.spawnTime);
+            yield return new WaitForSeconds(wave.spawnTime);
         }
     }
 
