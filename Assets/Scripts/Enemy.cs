@@ -35,7 +35,7 @@ public class Enemy : MonoBehaviour
         {
             transform.Rotate(Vector3.forward * 10);
 
-            if (Vector3.Distance(transform.position, wayPoints[currentIndex].position) < 0.02f * movement2D.MoveSpeed)
+            if (Vector3.Distance(transform.position, wayPoints[currentIndex].position) < Mathf.Max(0.02f, Time.deltaTime) * movement2D.MoveSpeed)
             {
                 NextMoveTo();
             }
