@@ -5,7 +5,6 @@ public enum WeaponState { SearchTarget = 0, AttackToTarget }
 
 public class TowerWeapon : MonoBehaviour
 {
-    [SerializeField]
     private TowerTemplate towerTemplate;
     [SerializeField]
     private GameObject projectilePrefab;
@@ -26,9 +25,11 @@ public class TowerWeapon : MonoBehaviour
     public int Level => level + 1;
     public int MaxLevel => towerTemplate.weapon.Length;
 
-    public void Setup(EnemySpawner enemySpawner, PlayerGold playerGold, Tile ownerTile)
+    public void Setup(TowerTemplate tower, EnemySpawner enemySpawner, PlayerGold playerGold, Tile ownerTile)
     {
+        towerTemplate = tower;
         spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer.sprite = TowerSprite;
         this.enemySpawner = enemySpawner;
         this.playerGold = playerGold;
         this.ownerTile = ownerTile;

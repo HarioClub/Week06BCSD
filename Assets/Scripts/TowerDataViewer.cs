@@ -24,19 +24,6 @@ public class TowerDataViewer : MonoBehaviour
 
     private TowerWeapon currentTower;
 
-    private void Awake()
-    {
-        OffPanel();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            OffPanel();
-        }
-    }
-
     public void OnPanel(Transform towerWeapon)
     {
         currentTower = towerWeapon.GetComponent<TowerWeapon>();
