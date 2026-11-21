@@ -6,6 +6,7 @@ public class TowerWeapon : MonoBehaviour
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private LineRenderer laser;
     [SerializeField] private Transform laserHit;
+    [SerializeField] private CircleCollider2D slowArea;
 
     private TowerTemplate towerTemplate;
     private EnemySpawner enemySpawner;
@@ -21,6 +22,7 @@ public class TowerWeapon : MonoBehaviour
     public TowerType Type => towerTemplate.towerType;
     public Sprite TowerSprite => Weapon.sprite;
     public float Damage => Weapon.damage;
+    public float Slow => Weapon.slow;
     public float Rate => Weapon.rate;
     public float Range => Weapon.range;
     public int Level => level + 1;
@@ -33,11 +35,12 @@ public class TowerWeapon : MonoBehaviour
         this.playerGold = playerGold;
         this.ownerTile = ownerTile;
         spriteRenderer = GetComponent<SpriteRenderer>();
-        spriteRenderer.sprite = TowerSprite;
+        ApplyLevel();
     }
 
     private void Update()
     {
+        if (Type == TowerType.Slow) return;
         if (target == null || target.CurrentHP <= 0 || !InRange(target.transform.position))
         {
             target = FindClosestEnemy();
@@ -94,13 +97,20 @@ public class TowerWeapon : MonoBehaviour
 
         level++;
         playerGold.CurrentGold -= Weapon.cost;
+        ApplyLevel();
+        return true;
+    }
+
+    private void ApplyLevel()
+    {
         spriteRenderer.sprite = TowerSprite;
         if (Type == TowerType.Laser)
         {
             laser.startWidth = 0.05f * Level;
             laser.endWidth = 0.05f;
         }
-        return true;
+        if (Type == TowerType.Slow)
+            slowArea.radius = Range / slowArea.transform.lossyScale.x;
     }
 
     public void Sell()

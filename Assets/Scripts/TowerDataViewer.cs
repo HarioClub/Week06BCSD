@@ -41,7 +41,9 @@ public class TowerDataViewer : MonoBehaviour
     private void UpdateTowerData()
     {
         imageTower.sprite = currentTower.TowerSprite;
-        textDamage.text = "Damage : " + currentTower.Damage;
+        bool isSlow = currentTower.Type == TowerType.Slow;
+        imageTower.rectTransform.sizeDelta = new Vector2(isSlow ? 59 : 88, 59);
+        textDamage.text = isSlow ? $"Slow : {currentTower.Slow * 100:0}%" : "Damage : " + currentTower.Damage;
         textRate.text = "Rate : " + currentTower.Rate;
         textRange.text = "Range : " + currentTower.Range;
         textLevel.text = "Level : " + currentTower.Level;

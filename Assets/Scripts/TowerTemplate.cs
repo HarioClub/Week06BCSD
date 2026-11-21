@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum TowerType { Cannon, Laser }
+public enum TowerType { Cannon, Laser, Slow }
 
 [CreateAssetMenu]
 public class TowerTemplate : ScriptableObject
@@ -14,6 +14,7 @@ public class TowerTemplate : ScriptableObject
     {
         public Sprite sprite;
         public float damage;
+        public float slow;
         public float rate;
         public float range;
         public int cost;
