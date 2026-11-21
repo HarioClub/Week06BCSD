@@ -56,6 +56,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void DestroyEnemy(EnemyDestroyType type, Enemy enemy, int gold)
     {
+        if (!enemyList.Remove(enemy)) return;
         if (type == EnemyDestroyType.Arrive)
         {
             playerHP.TakeDamage(1);
@@ -66,7 +67,6 @@ public class EnemySpawner : MonoBehaviour
         }
 
         currentEnemyCount--;
-        enemyList.Remove(enemy);
         Destroy(enemy.gameObject);
     }
 

@@ -3,14 +3,16 @@ using UnityEngine;
 public class SliderPositionAutoSetter : MonoBehaviour
 {
     [SerializeField]
-    private Vector3 distance = Vector3.down * 20.0f;
+    private Vector3 offset = Vector3.down * 0.4f;
     private Transform targetTransform;
     private RectTransform rectTransform;
+    private Camera mainCamera;
 
     public void Setup(Transform target)
     {
         targetTransform = target;
         rectTransform = GetComponent<RectTransform>();
+        mainCamera = Camera.main;
     }
 
     private void LateUpdate()
@@ -21,7 +23,6 @@ public class SliderPositionAutoSetter : MonoBehaviour
             return;
         }
 
-        Vector3 screenPosition = Camera.main.WorldToScreenPoint(targetTransform.position);
-        rectTransform.position = screenPosition + distance;
+        rectTransform.position = mainCamera.WorldToScreenPoint(targetTransform.position + offset);
     }
 }
