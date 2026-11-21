@@ -15,6 +15,10 @@ public class TowerDataViewer : MonoBehaviour
     [SerializeField]
     private TextMeshProUGUI textLevel;
     [SerializeField]
+    private TextMeshProUGUI textUpgradeCost;
+    [SerializeField]
+    private TextMeshProUGUI textSellCost;
+    [SerializeField]
     private TowerAttackRange towerAttackRange;
 
     [SerializeField]
@@ -41,13 +45,20 @@ public class TowerDataViewer : MonoBehaviour
     private void UpdateTowerData()
     {
         imageTower.sprite = currentTower.TowerSprite;
-        bool isSlow = currentTower.Type == TowerType.Slow;
-        imageTower.rectTransform.sizeDelta = new Vector2(isSlow ? 59 : 88, 59);
-        textDamage.text = isSlow ? $"Slow : {currentTower.Slow * 100:0}%" : "Damage : " + currentTower.Damage;
+        bool hasBarrel = currentTower.Type == TowerType.Cannon || currentTower.Type == TowerType.Laser;
+        imageTower.rectTransform.sizeDelta = new Vector2(hasBarrel ? 88 : 59, 59);
+        if (hasBarrel)
+            textDamage.text = $"Damage : {currentTower.Damage}+<color=red>{currentTower.BonusDamage:F1}</color>";
+        else if (currentTower.Type == TowerType.Slow)
+            textDamage.text = $"Slow : {currentTower.Slow * 100:0}%";
+        else
+            textDamage.text = $"Buff : {currentTower.Buff * 100:0}%";
         textRate.text = "Rate : " + currentTower.Rate;
         textRange.text = "Range : " + currentTower.Range;
         textLevel.text = "Level : " + currentTower.Level;
-        buttonUpgrade.interactable = currentTower.Level < currentTower.MaxLevel ? true : false;
+        textUpgradeCost.text = currentTower.UpgradeCost.ToString();
+        textSellCost.text = currentTower.SellCost.ToString();
+        buttonUpgrade.interactable = currentTower.Level < currentTower.MaxLevel;
     }
 
     public void OnClickEventTowerUpgrade()

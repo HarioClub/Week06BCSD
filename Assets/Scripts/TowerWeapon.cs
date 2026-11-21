@@ -9,6 +9,7 @@ public class TowerWeapon : MonoBehaviour
     [SerializeField] private CircleCollider2D slowArea;
 
     private TowerTemplate towerTemplate;
+    private TowerSpawner towerSpawner;
     private EnemySpawner enemySpawner;
     private PlayerGold playerGold;
     private Tile ownerTile;
@@ -17,20 +18,26 @@ public class TowerWeapon : MonoBehaviour
     private Collider2D targetShape;
     private int level;
     private float shotTimer;
+    private float buffRate;
 
     private TowerTemplate.Weapon Weapon => towerTemplate.weapon[level];
     public TowerType Type => towerTemplate.towerType;
     public Sprite TowerSprite => Weapon.sprite;
     public float Damage => Weapon.damage;
     public float Slow => Weapon.slow;
+    public float Buff => Weapon.buff;
+    public float BonusDamage => Damage * buffRate;
     public float Rate => Weapon.rate;
     public float Range => Weapon.range;
     public int Level => level + 1;
     public int MaxLevel => towerTemplate.weapon.Length;
+    public int UpgradeCost => Level < MaxLevel ? towerTemplate.weapon[level + 1].cost : 0;
+    public int SellCost => Weapon.sell;
 
-    public void Setup(TowerTemplate tower, EnemySpawner enemySpawner, PlayerGold playerGold, Tile ownerTile)
+    public void Setup(TowerTemplate tower, TowerSpawner towerSpawner, EnemySpawner enemySpawner, PlayerGold playerGold, Tile ownerTile)
     {
         towerTemplate = tower;
+        this.towerSpawner = towerSpawner;
         this.enemySpawner = enemySpawner;
         this.playerGold = playerGold;
         this.ownerTile = ownerTile;
@@ -40,7 +47,7 @@ public class TowerWeapon : MonoBehaviour
 
     private void Update()
     {
-        if (Type == TowerType.Slow) return;
+        if (Type == TowerType.Slow || Type == TowerType.Buff) return;
         if (target == null || target.CurrentHP <= 0 || !InRange(target.transform.position))
         {
             target = FindClosestEnemy();
@@ -59,16 +66,21 @@ public class TowerWeapon : MonoBehaviour
             laser.SetPosition(0, spawnPoint.position);
             laser.SetPosition(1, new Vector3(hit.x, hit.y, transform.position.z));
             laserHit.position = hit;
-            target.TakeDamage(Damage * Time.deltaTime);
+            target.TakeDamage((Damage + BonusDamage) * Time.deltaTime);
         }
         else
         {
             shotTimer -= Time.deltaTime;
             if (shotTimer > 0) return;
             GameObject shot = Instantiate(projectilePrefab, spawnPoint.position, Quaternion.identity);
-            shot.GetComponent<Projectile>().Setup(target.transform, Damage);
+            shot.GetComponent<Projectile>().Setup(target.transform, Damage + BonusDamage);
             shotTimer = Rate;
         }
+    }
+
+    public void SetBuff(float rate)
+    {
+        buffRate = rate;
     }
 
     public bool InRange(Vector2 position)
@@ -92,12 +104,13 @@ public class TowerWeapon : MonoBehaviour
 
     public bool Upgrade()
     {
-        if (Level >= MaxLevel || playerGold.CurrentGold < towerTemplate.weapon[level + 1].cost)
+        if (Level >= MaxLevel || playerGold.CurrentGold < UpgradeCost)
             return false;
 
         level++;
         playerGold.CurrentGold -= Weapon.cost;
         ApplyLevel();
+        if (Type == TowerType.Buff) towerSpawner.RefreshBuffs();
         return true;
     }
 
@@ -115,7 +128,8 @@ public class TowerWeapon : MonoBehaviour
 
     public void Sell()
     {
-        playerGold.CurrentGold += Weapon.sell;
+        if (!towerSpawner.RemoveTower(this)) return;
+        playerGold.CurrentGold += SellCost;
         ownerTile.IsBuildTower = false;
         Destroy(gameObject);
     }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TowerSpawner : MonoBehaviour
@@ -13,6 +14,7 @@ public class TowerSpawner : MonoBehaviour
 
     private TowerTemplate selectedTower;
     private SpriteRenderer preview;
+    private readonly List<TowerWeapon> towers = new List<TowerWeapon>();
 
     public bool IsPlacing => selectedTower != null;
 
@@ -70,9 +72,35 @@ public class TowerSpawner : MonoBehaviour
 
         Vector3 position = tile.transform.position + Vector3.back;
         GameObject clone = Instantiate(selectedTower.towerPrefab, position, Quaternion.identity);
-        clone.GetComponent<TowerWeapon>().Setup(selectedTower, enemySpawner, playerGold, tile);
+        TowerWeapon tower = clone.GetComponent<TowerWeapon>();
+        tower.Setup(selectedTower, this, enemySpawner, playerGold, tile);
+        towers.Add(tower);
+        RefreshBuffs();
         tile.IsBuildTower = true;
         playerGold.CurrentGold -= cost;
         CancelPlacement();
+    }
+
+    public void RefreshBuffs()
+    {
+        foreach (TowerWeapon target in towers)
+        {
+            if (target.Type != TowerType.Cannon && target.Type != TowerType.Laser) continue;
+
+            float strongest = 0f;
+            foreach (TowerWeapon source in towers)
+            {
+                if (source.Type == TowerType.Buff && source.InRange(target.transform.position))
+                    strongest = Mathf.Max(strongest, source.Buff);
+            }
+            target.SetBuff(strongest);
+        }
+    }
+
+    public bool RemoveTower(TowerWeapon tower)
+    {
+        if (!towers.Remove(tower)) return false;
+        RefreshBuffs();
+        return true;
     }
 }
