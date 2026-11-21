@@ -17,6 +17,12 @@ public class ObjectDetector : MonoBehaviour
 
     private void Update()
     {
+        if (WaveSystem.Instance.IsFinished)
+        {
+            if (towerSpawner.IsPlacing) towerSpawner.CancelPlacement();
+            if (towerDataViewer.gameObject.activeSelf) towerDataViewer.OffPanel();
+            return;
+        }
         Mouse mouse = Mouse.current;
         if (Keyboard.current?.escapeKey.wasPressedThisFrame == true || mouse?.rightButton.wasPressedThisFrame == true)
         {
@@ -57,6 +63,7 @@ public class ObjectDetector : MonoBehaviour
 
     public void SelectTower(TowerTemplate tower)
     {
+        if (WaveSystem.Instance.IsFinished) return;
         towerDataViewer.OffPanel();
         towerSpawner.SelectTower(tower);
     }

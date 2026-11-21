@@ -1523,7 +1523,6 @@ MonoBehaviour:
   textEnemyCount: {fileID: 162104090}
   playerHP: {fileID: 1632461961}
   playerGold: {fileID: 1632461960}
-  waveSystem: {fileID: 1637857170}
   enemySpawner: {fileID: 1637857168}
 --- !u!114 &334977890
 MonoBehaviour:
@@ -8380,6 +8379,7 @@ MonoBehaviour:
     - {fileID: 6264381315887187776, guid: 5d00813c4dd8b7747a8f4887cbf7fd5f, type: 3}
     - {fileID: 6264381315887187776, guid: 966847f973ab91d4aac0174297a19662, type: 3}
   enemySpawner: {fileID: 1637857168}
+  systemTextViewer: {fileID: 2137566849}
 --- !u!1 &1638614047
 GameObject:
   m_ObjectHideFlags: 0

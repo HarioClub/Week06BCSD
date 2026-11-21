@@ -20,14 +20,13 @@ public class PlayerHP : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
-        currentHP -= damage;
+        if (currentHP <= 0f) return;
+        currentHP = Mathf.Max(0f, currentHP - damage);
 
         StopCoroutine("HitAlphaAnimation");
         StartCoroutine("HitAlphaAnimation");
 
-        if (currentHP <= 0)
-        {
-        }
+        if (currentHP == 0f) WaveSystem.Instance.GameOver();
     }
 
     private IEnumerator HitAlphaAnimation()
