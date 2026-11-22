@@ -1,133 +1,135 @@
-using System.Collections;
 using UnityEngine;
-
-public enum WeaponState { SearchTarget = 0, AttackToTarget }
 
 public class TowerWeapon : MonoBehaviour
 {
-    [SerializeField]
+    [SerializeField] private GameObject projectilePrefab;
+    [SerializeField] private Transform spawnPoint;
+    [SerializeField] private LineRenderer laser;
+    [SerializeField] private Transform laserHit;
+    [SerializeField] private CircleCollider2D slowArea;
+
     private TowerTemplate towerTemplate;
-    [SerializeField]
-    private GameObject projectilePrefab;
-    [SerializeField]
-    private Transform spawnPoint;
-    private int level = 0;
-    private WeaponState weaponState = WeaponState.SearchTarget;
-    private Transform attackTarget = null;
-    private SpriteRenderer spriteRenderer;
+    private TowerSpawner towerSpawner;
     private EnemySpawner enemySpawner;
     private PlayerGold playerGold;
     private Tile ownerTile;
+    private SpriteRenderer spriteRenderer;
+    private EnemyHP target;
+    private Collider2D targetShape;
+    private int level;
+    private float shotTimer;
+    private float buffRate;
 
-    public Sprite TowerSprite => towerTemplate.weapon[level].sprite;
-    public float Damage => towerTemplate.weapon[level].damage;
-    public float Rate => towerTemplate.weapon[level].rate;
-    public float Range => towerTemplate.weapon[level].range;
+    private TowerTemplate.Weapon Weapon => towerTemplate.weapon[level];
+    public TowerType Type => towerTemplate.towerType;
+    public Sprite TowerSprite => Weapon.sprite;
+    public float Damage => Weapon.damage;
+    public float Slow => Weapon.slow;
+    public float Buff => Weapon.buff;
+    public float BonusDamage => Damage * buffRate;
+    public float Rate => Weapon.rate;
+    public float Range => Weapon.range;
     public int Level => level + 1;
     public int MaxLevel => towerTemplate.weapon.Length;
+    public int UpgradeCost => Level < MaxLevel ? towerTemplate.weapon[level + 1].cost : 0;
+    public int SellCost => Weapon.sell;
 
-    public void Setup(EnemySpawner enemySpawner, PlayerGold playerGold, Tile ownerTile)
+    public void Setup(TowerTemplate tower, TowerSpawner towerSpawner, EnemySpawner enemySpawner, PlayerGold playerGold, Tile ownerTile)
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        towerTemplate = tower;
+        this.towerSpawner = towerSpawner;
         this.enemySpawner = enemySpawner;
         this.playerGold = playerGold;
         this.ownerTile = ownerTile;
-        ChangeState(WeaponState.SearchTarget);
-    }
-
-    public void ChangeState(WeaponState newState)
-    {
-        StopCoroutine(weaponState.ToString());
-        weaponState = newState;
-        StartCoroutine(weaponState.ToString());
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        ApplyLevel();
     }
 
     private void Update()
     {
-        if (attackTarget != null)
+        if (Type == TowerType.Slow || Type == TowerType.Buff) return;
+        if (target == null || target.CurrentHP <= 0 || !InRange(target.transform.position))
         {
-            RotateToTarget();
+            target = FindClosestEnemy();
+            targetShape = target != null ? target.GetComponent<Collider2D>() : null;
+            shotTimer = Rate;
+        }
+
+        if (Type == TowerType.Laser) laser.gameObject.SetActive(target != null);
+        if (target == null) return;
+
+        Vector2 direction = target.transform.position - transform.position;
+        transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+        if (Type == TowerType.Laser)
+        {
+            Vector2 hit = targetShape.ClosestPoint(spawnPoint.position);
+            laser.SetPosition(0, spawnPoint.position);
+            laser.SetPosition(1, new Vector3(hit.x, hit.y, transform.position.z));
+            laserHit.position = hit;
+            target.TakeDamage((Damage + BonusDamage) * Time.deltaTime);
+        }
+        else
+        {
+            shotTimer -= Time.deltaTime;
+            if (shotTimer > 0) return;
+            GameObject shot = Instantiate(projectilePrefab, spawnPoint.position, Quaternion.identity);
+            shot.GetComponent<Projectile>().Setup(target.transform, Damage + BonusDamage);
+            shotTimer = Rate;
         }
     }
 
-    private void RotateToTarget()
+    public void SetBuff(float rate)
     {
-        float dx = attackTarget.position.x - transform.position.x;
-        float dy = attackTarget.position.y - transform.position.y;
-        float degree = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, 0, degree);
+        buffRate = rate;
     }
 
-    private IEnumerator SearchTarget()
+    public bool InRange(Vector2 position)
     {
-        while (true)
+        return Vector2.Distance(position, transform.position) <= Range;
+    }
+
+    private EnemyHP FindClosestEnemy()
+    {
+        Enemy closest = null;
+        float nearest = Range;
+        foreach (Enemy enemy in enemySpawner.EnemyList)
         {
-            float closestDistSqr = Mathf.Infinity;
-            for (int i = 0; i < enemySpawner.EnemyList.Count; ++i)
-            {
-                float distance = Vector3.Distance(enemySpawner.EnemyList[i].transform.position, transform.position);
-                if (distance <= towerTemplate.weapon[level].range && distance <= closestDistSqr)
-                {
-                    closestDistSqr = distance;
-                    attackTarget = enemySpawner.EnemyList[i].transform;
-                }
-            }
-
-            if (attackTarget != null)
-            {
-                ChangeState(WeaponState.AttackToTarget);
-            }
-
-            yield return null;
+            float distance = Vector2.Distance(enemy.transform.position, transform.position);
+            if (distance > nearest) continue;
+            nearest = distance;
+            closest = enemy;
         }
-    }
-
-    private IEnumerator AttackToTarget()
-    {
-        while (true)
-        {
-            if (attackTarget == null)
-            {
-                ChangeState(WeaponState.SearchTarget);
-                break;
-            }
-
-            float distance = Vector3.Distance(attackTarget.position, transform.position);
-            if (distance > towerTemplate.weapon[level].range)
-            {
-                attackTarget = null;
-                ChangeState(WeaponState.SearchTarget);
-                break;
-            }
-
-            yield return new WaitForSeconds(towerTemplate.weapon[level].rate);
-            SpawnProjectile();
-        }
-    }
-
-    private void SpawnProjectile()
-    {
-        GameObject clone = Instantiate(projectilePrefab, spawnPoint.position, Quaternion.identity);
-        clone.GetComponent<Projectile>().Setup(attackTarget, towerTemplate.weapon[level].damage);
+        return closest != null ? closest.GetComponent<EnemyHP>() : null;
     }
 
     public bool Upgrade()
     {
-        if (playerGold.CurrentGold < towerTemplate.weapon[level + 1].cost)
-        {
+        if (Level >= MaxLevel || playerGold.CurrentGold < UpgradeCost)
             return false;
-        }
 
         level++;
-        spriteRenderer.sprite = towerTemplate.weapon[level].sprite;
-        playerGold.CurrentGold -= towerTemplate.weapon[level].cost;
-
+        playerGold.CurrentGold -= Weapon.cost;
+        ApplyLevel();
+        if (Type == TowerType.Buff) towerSpawner.RefreshBuffs();
         return true;
+    }
+
+    private void ApplyLevel()
+    {
+        spriteRenderer.sprite = TowerSprite;
+        if (Type == TowerType.Laser)
+        {
+            laser.startWidth = 0.05f * Level;
+            laser.endWidth = 0.05f;
+        }
+        if (Type == TowerType.Slow)
+            slowArea.radius = Range / slowArea.transform.lossyScale.x;
     }
 
     public void Sell()
     {
-        playerGold.CurrentGold += towerTemplate.weapon[level].sell;
+        if (!towerSpawner.RemoveTower(this)) return;
+        playerGold.CurrentGold += SellCost;
         ownerTile.IsBuildTower = false;
         Destroy(gameObject);
     }

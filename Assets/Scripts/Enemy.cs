@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum EnemyDestroyType { Kill = 0, Arrive }
@@ -10,6 +11,7 @@ public class Enemy : MonoBehaviour
     private int currentIndex = 0;
     private Movement2D movement2D;
     private EnemySpawner enemySpawner;
+    private readonly List<TowerWeapon> slowTowers = new List<TowerWeapon>();
     [SerializeField]
     private int gold = 10;
 
@@ -33,7 +35,8 @@ public class Enemy : MonoBehaviour
 
         while (true)
         {
-            transform.Rotate(Vector3.forward * 10);
+            UpdateTravelTime();
+            transform.Rotate(Vector3.forward, 360f * Time.deltaTime);
 
             if (Vector3.Distance(transform.position, wayPoints[currentIndex].position) < Mathf.Max(0.02f, Time.deltaTime) * movement2D.MoveSpeed)
             {
@@ -42,6 +45,28 @@ public class Enemy : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    public void EnterSlowField(TowerWeapon tower)
+    {
+        if (!slowTowers.Contains(tower)) slowTowers.Add(tower);
+    }
+
+    public void ExitSlowField(TowerWeapon tower)
+    {
+        slowTowers.Remove(tower);
+    }
+
+    private void UpdateTravelTime()
+    {
+        float multiplier = 1f;
+        for (int i = slowTowers.Count - 1; i >= 0; i--)
+        {
+            TowerWeapon tower = slowTowers[i];
+            if (tower == null) slowTowers.RemoveAt(i);
+            else multiplier *= 1f + tower.Slow;
+        }
+        movement2D.TravelTimeMultiplier = multiplier;
     }
 
     private void NextMoveTo()

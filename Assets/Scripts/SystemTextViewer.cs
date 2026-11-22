@@ -16,6 +16,7 @@ public class SystemTextViewer : MonoBehaviour
 
     public void PrintText(SystemType type)
     {
+        if (WaveSystem.Instance.IsFinished) return;
         switch (type)
         {
             case SystemType.Money:
@@ -27,5 +28,12 @@ public class SystemTextViewer : MonoBehaviour
         }
 
         tmpAlpha.FadeOut();
+    }
+
+    public void ShowResult(bool won)
+    {
+        tmpAlpha.StopAllCoroutines();
+        textSystem.alpha = 1f;
+        textSystem.text = won ? "Stage clear! Click the wave button to restart." : "Game over. Click the wave button to restart.";
     }
 }

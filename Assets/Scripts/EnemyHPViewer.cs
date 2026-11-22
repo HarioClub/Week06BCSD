@@ -14,6 +14,6 @@ public class EnemyHPViewer : MonoBehaviour
 
     private void Update()
     {
-        hpSlider.value = enemyHP.CurrentHP / enemyHP.MaxHP;
+        if (enemyHP != null) hpSlider.value = enemyHP.CurrentHP / enemyHP.MaxHP;
     }
 }

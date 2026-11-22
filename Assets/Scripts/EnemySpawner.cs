@@ -56,6 +56,9 @@ public class EnemySpawner : MonoBehaviour
 
     public void DestroyEnemy(EnemyDestroyType type, Enemy enemy, int gold)
     {
+        if (!enemyList.Remove(enemy)) return;
+        currentEnemyCount--;
+        Destroy(enemy.gameObject);
         if (type == EnemyDestroyType.Arrive)
         {
             playerHP.TakeDamage(1);
@@ -65,9 +68,15 @@ public class EnemySpawner : MonoBehaviour
             playerGold.CurrentGold += gold;
         }
 
-        currentEnemyCount--;
-        enemyList.Remove(enemy);
-        Destroy(enemy.gameObject);
+        WaveSystem.Instance.EnemyRemoved();
+    }
+
+    public void StopWave()
+    {
+        StopAllCoroutines();
+        foreach (Enemy enemy in enemyList) Destroy(enemy.gameObject);
+        enemyList.Clear();
+        currentEnemyCount = 0;
     }
 
     private void SpawnEnemyHPSlider(GameObject enemy)
